@@ -1,0 +1,345 @@
+package ast
+
+import (
+	"bytes"
+	"fmt"
+	"strings"
+)
+
+type Node interface {
+	String() string
+}
+
+type Expression interface {
+	Node
+	expressionNode()
+}
+
+type Statement interface {
+	Node
+	statementNode()
+}
+
+type Program struct {
+	Statements []Node
+}
+
+func (p *Program) String() string {
+	var out bytes.Buffer
+	for i, s := range p.Statements {
+		if s != nil {
+			out.WriteString(s.String())
+			if i < len(p.Statements)-1 {
+				out.WriteString("\n")
+			}
+		}
+	}
+	return out.String()
+}
+
+type Identifier struct {
+	Value string
+}
+
+func (i *Identifier) expressionNode() {}
+func (i *Identifier) String() string  { return i.Value }
+
+type IntegerLiteral struct {
+	Value int64
+}
+
+func (il *IntegerLiteral) expressionNode() {}
+func (il *IntegerLiteral) String() string  { return fmt.Sprintf("%d", il.Value) }
+
+type FloatLiteral struct {
+	Value float64
+}
+
+func (fl *FloatLiteral) expressionNode() {}
+func (fl *FloatLiteral) String() string  { return fmt.Sprintf("%g", fl.Value) }
+
+type StringLiteral struct {
+	Value string
+}
+
+func (sl *StringLiteral) expressionNode() {}
+func (sl *StringLiteral) String() string  { return "\"" + sl.Value + "\"" }
+
+type BooleanLiteral struct {
+	Value bool
+}
+
+func (bl *BooleanLiteral) expressionNode() {}
+func (bl *BooleanLiteral) String() string {
+	if bl.Value {
+		return "true"
+	}
+	return "false"
+}
+
+type InfixExpression struct {
+	Left     Expression
+	Operator string
+	Right    Expression
+}
+
+func (ie *InfixExpression) expressionNode() {}
+func (ie *InfixExpression) String() string {
+	if ie.Left == nil || ie.Right == nil {
+		return "(nil)"
+	}
+	return "(" + ie.Left.String() + " " + ie.Operator + " " + ie.Right.String() + ")"
+}
+
+type AssignStatement struct {
+	Name  *Identifier
+	Value Expression
+}
+
+func (as *AssignStatement) statementNode() {}
+func (as *AssignStatement) String() string {
+	if as.Name == nil {
+		return "nil"
+	}
+	if as.Value == nil {
+		return as.Name.String() + " = nil"
+	}
+	return as.Name.String() + " = " + as.Value.String()
+}
+
+type BlockStatement struct {
+	Statements []Node
+}
+
+func (bs *BlockStatement) statementNode() {}
+func (bs *BlockStatement) String() string {
+	var out bytes.Buffer
+	for i, s := range bs.Statements {
+		if s != nil {
+			out.WriteString("    ")
+			out.WriteString(s.String())
+			if i < len(bs.Statements)-1 {
+				out.WriteString("\n")
+			}
+		}
+	}
+	return out.String()
+}
+
+type FunctionStatement struct {
+	Name       *Identifier
+	Parameters []*Identifier
+	Body       *BlockStatement
+}
+
+func (fs *FunctionStatement) statementNode() {}
+func (fs *FunctionStatement) String() string {
+	var params bytes.Buffer
+	for i, p := range fs.Parameters {
+		if p != nil {
+			params.WriteString(p.String())
+		}
+		if i < len(fs.Parameters)-1 {
+			params.WriteString(", ")
+		}
+	}
+	return "funct " + fs.Name.String() + "(" + params.String() + "):\n" + fs.Body.String() + "\nend"
+}
+
+type CallExpression struct {
+	Function  Expression
+	Arguments []Expression
+}
+
+func (ce *CallExpression) expressionNode() {}
+func (ce *CallExpression) String() string {
+	if ce.Function == nil {
+		return "nil()"
+	}
+	var args []string
+	for _, a := range ce.Arguments {
+		if a != nil {
+			args = append(args, a.String())
+		}
+	}
+	return ce.Function.String() + "(" + strings.Join(args, ", ") + ")"
+}
+
+type ListLiteral struct {
+	Elements []Expression
+}
+
+func (ll *ListLiteral) expressionNode() {}
+func (ll *ListLiteral) String() string {
+	var out bytes.Buffer
+	elements := []string{}
+	for _, el := range ll.Elements {
+		elements = append(elements, el.String())
+	}
+	out.WriteString("[")
+	out.WriteString(strings.Join(elements, ", "))
+	out.WriteString("]")
+	return out.String()
+}
+
+type MapLiteral struct {
+	Pairs map[Expression]Expression
+}
+
+func (ml *MapLiteral) expressionNode() {}
+func (ml *MapLiteral) String() string {
+	var out bytes.Buffer
+	pairs := []string{}
+	for key, val := range ml.Pairs {
+		pairs = append(pairs, key.String()+" :: "+val.String())
+	}
+	out.WriteString("{")
+	out.WriteString(strings.Join(pairs, ", "))
+	out.WriteString("}")
+	return out.String()
+}
+
+type IndexExpression struct {
+	Left  Expression
+	Index Expression
+}
+
+func (ie *IndexExpression) expressionNode() {}
+func (ie *IndexExpression) String() string {
+	return "(" + ie.Left.String() + ".[" + ie.Index.String() + "])"
+}
+
+type AssignIndexStatement struct {
+	Left  *IndexExpression
+	Value Expression
+}
+
+func (ais *AssignIndexStatement) statementNode() {}
+func (ais *AssignIndexStatement) String() string {
+	return ais.Left.String() + " = " + ais.Value.String()
+}
+
+type SliceExpression struct {
+	Left  Expression
+	Start Expression
+	End   Expression
+}
+
+func (se *SliceExpression) expressionNode() {}
+func (se *SliceExpression) String() string {
+	out := se.Left.String() + ".["
+	if se.Start != nil {
+		out += se.Start.String()
+	}
+	out += ".."
+	if se.End != nil {
+		out += se.End.String()
+	}
+	out += "]"
+	return out
+}
+
+type DotExpression struct {
+	Left  Expression
+	Right *Identifier
+}
+
+func (de *DotExpression) expressionNode() {}
+func (de *DotExpression) String() string {
+	return de.Left.String() + "." + de.Right.String()
+}
+
+type IfExpression struct {
+	Condition   Expression
+	Consequence *BlockStatement
+	Alternative []*ElseIfExpression
+	Else        *BlockStatement
+}
+
+func (ie *IfExpression) expressionNode() {}
+func (ie *IfExpression) String() string {
+	var out bytes.Buffer
+	out.WriteString("if ")
+	out.WriteString(ie.Condition.String())
+	out.WriteString(":\n")
+	if ie.Consequence != nil {
+		out.WriteString(ie.Consequence.String())
+	}
+	for _, alt := range ie.Alternative {
+		if alt != nil {
+			out.WriteString("\n")
+			out.WriteString(alt.String())
+		}
+	}
+	if ie.Else != nil {
+		out.WriteString("\nelse:\n")
+		out.WriteString(ie.Else.String())
+	}
+	out.WriteString("\nend")
+	return out.String()
+}
+
+type ElseIfExpression struct {
+	Condition   Expression
+	Consequence *BlockStatement
+}
+
+func (ei *ElseIfExpression) expressionNode() {}
+func (ei *ElseIfExpression) String() string {
+	var out bytes.Buffer
+	out.WriteString("elif ")
+	out.WriteString(ei.Condition.String())
+	out.WriteString(":\n")
+	if ei.Consequence != nil {
+		out.WriteString(ei.Consequence.String())
+	}
+	return out.String()
+}
+
+type ForStatement struct {
+	Initialization *AssignStatement
+	Condition      Expression
+	Update         *AssignStatement
+	Body           *BlockStatement
+}
+
+func (fs *ForStatement) statementNode()  {}
+func (fs *ForStatement) expressionNode() {}
+func (fs *ForStatement) String() string {
+	var out bytes.Buffer
+	out.WriteString("for ")
+	out.WriteString(fs.Initialization.String())
+	out.WriteString(" to ")
+	out.WriteString(":\n")
+	out.WriteString(fs.Body.String())
+	out.WriteString("\nend")
+	return out.String()
+}
+
+type WhileStatement struct {
+	Condition Expression
+	Body      *BlockStatement
+}
+
+func (ws *WhileStatement) expressionNode() {}
+func (ws *WhileStatement) String() string {
+	var out bytes.Buffer
+	out.WriteString("while ")
+	out.WriteString(ws.Condition.String())
+	out.WriteString(":\n")
+	out.WriteString(ws.Body.String())
+	out.WriteString("\nend")
+	return out.String()
+}
+
+type ReturnStatement struct {
+	Value Expression
+}
+
+func (rs *ReturnStatement) statementNode() {}
+func (rs *ReturnStatement) String() string {
+	if rs.Value != nil {
+		return "return " + rs.Value.String()
+	}
+	return "return"
+}
