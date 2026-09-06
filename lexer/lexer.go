@@ -38,7 +38,7 @@ func (l *Lexer) peekChar() byte {
 func (l *Lexer) NextToken() token.Token {
 	l.skipWhitespace()
 
-	if l.ch == '~' && l.peekChar() == '~' {
+	if l.ch == '/' && l.peekChar() == '/' {
 		l.skipComment()
 		return l.NextToken()
 	}
