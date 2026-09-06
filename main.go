@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 )
 
-const Version = "0.0.1 (unstable)"
+const Version = "0.0.2 (unstable)"
 
 func main() {
 	if len(os.Args) < 2 {
