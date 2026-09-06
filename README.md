@@ -108,7 +108,7 @@ print("Hello, " + "world!")
 ```
 ### Comments:
 ```tokype
-~~comment
+//comment
 ```
 ## CLI commands:
 
