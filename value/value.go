@@ -126,6 +126,7 @@ type FunctionObject struct {
 	Body       interface{}
 	Env        interface{}
 	NumLocals  int
+	NativeFn   func([]Value) Value
 }
 
 func NewIntValue(v int64) Value {
