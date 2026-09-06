@@ -343,3 +343,6 @@ func (rs *ReturnStatement) String() string {
 	}
 	return "return"
 }
+
+type IncludeStatement struct {
+}
