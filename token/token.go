@@ -51,9 +51,6 @@ const (
 	TO     TokenType = "TO"
 	STEP   TokenType = "STEP"
 	RETURN TokenType = "RETURN"
-
-	AS      TokenType = "AS"
-	INCLUDE TokenType = "INCLUDE"
 )
 
 var keywords = map[string]TokenType{
@@ -69,8 +66,6 @@ var keywords = map[string]TokenType{
 	"to":      TO,
 	"step":    STEP,
 	"return":  RETURN,
-	"as":      AS,
-	"include": INCLUDE,
 }
 
 func LookupIdent(ident string) TokenType {
