@@ -260,13 +260,13 @@ func (o *Optimizer) inlineFunctionCalls(program *ast.Program) *ast.Program {
 
 	for _, stmt := range program.Statements {
 		if fnStmt, ok := stmt.(*ast.FunctionStatement); ok {
-			if fnStmt.Name != nil {
-				if calls, exists := functionCalls[fnStmt.Name.Value]; exists {
-					for _, call := range calls {
-						inlined := o.inlineFunctionCall(call, fnStmt)
-						if inlined != nil {
-							newStatements = append(newStatements, inlined)
-						}
+			newStatements = append(newStatements, fnStmt)
+
+			if calls, exists := functionCalls[fnStmt.Name.Value]; exists {
+				for _, call := range calls {
+					inlined := o.inlineFunctionCall(call, fnStmt)
+					if inlined != nil {
+						newStatements = append(newStatements, inlined)
 					}
 				}
 			}

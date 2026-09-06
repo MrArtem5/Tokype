@@ -28,8 +28,8 @@ func (o *Optimizer) Optimize(program *ast.Program) *ast.Program {
 	o.constantFold(program)
 	o.optimizeControlFlow(program)
 	o.removeDeadCode(program)
-	o.optimizeCollections(program)
-	program = o.optimizeNestedLoops(program)
+
+	//program = o.optimizeNestedLoops(program)
 	program = o.inlineFunctionCalls(program)
 	program = o.removeEmptyFunctions(program)
 

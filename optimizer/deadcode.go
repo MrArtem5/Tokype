@@ -103,6 +103,14 @@ func (o *Optimizer) isDeadCode(node ast.Node) bool {
 		return true
 	}
 
+	if call, ok := node.(*ast.CallExpression); ok {
+		if ident, ok := call.Function.(*ast.Identifier); ok {
+			if o.hasSideEffects(ident.Value) {
+				return false
+			}
+		}
+	}
+
 	switch n := node.(type) {
 	case *ast.BlockStatement:
 		return len(n.Statements) == 0

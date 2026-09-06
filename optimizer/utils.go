@@ -2,6 +2,7 @@ package optimizer
 
 import (
 	"Tokype/ast"
+	"Tokype/evalut"
 	"Tokype/value"
 )
 
@@ -35,7 +36,10 @@ func (o *Optimizer) hasVariables(node ast.Node) bool {
 	var result bool
 	switch n := node.(type) {
 	case *ast.Identifier:
-		result = true
+		if _, isFunction := o.functions[n.Value]; isFunction {
+			return false
+		}
+		return true
 	case *ast.Program:
 		for _, stmt := range n.Statements {
 			if o.hasVariables(stmt) {
@@ -108,5 +112,19 @@ func (o *Optimizer) isSafeToEvaluate(expr ast.Expression) bool {
 		return true
 	default:
 		return true
+	}
+}
+
+func (o *Optimizer) isVariableDefined(ident *ast.Identifier, env *evalut.Environment) bool {
+	_, exists := env.Get(ident.Value)
+	return exists
+}
+
+func (o *Optimizer) hasSideEffects(funcName string) bool {
+	switch funcName {
+	case "print", "input", "push", "pop":
+		return true
+	default:
+		return false
 	}
 }

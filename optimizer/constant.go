@@ -129,7 +129,9 @@ func (o *Optimizer) evaluateConstant(expr ast.Expression) ast.Expression {
 	if expr == nil {
 		return nil
 	}
-
+	if o.hasUserFunctionCalls(expr) {
+		return nil
+	}
 	tempEnv := evalut.NewEnvironment()
 	result := evalut.Eval(expr, tempEnv)
 
@@ -142,4 +144,25 @@ func (o *Optimizer) evaluateConstant(expr ast.Expression) ast.Expression {
 	}
 
 	return o.valueToLiteral(result)
+}
+
+func (o *Optimizer) hasUserFunctionCalls(node ast.Node) bool {
+	switch n := node.(type) {
+	case *ast.CallExpression:
+		if ident, ok := n.Function.(*ast.Identifier); ok {
+			switch ident.Value {
+			case "print", "input", "get_time", "len", "push", "pop", "first", "rest", "contains", "negate", "repeat", "reserve":
+				return false
+			default:
+				return true
+			}
+		}
+		return true
+	case *ast.InfixExpression:
+		return o.hasUserFunctionCalls(n.Left) || o.hasUserFunctionCalls(n.Right)
+	case *ast.AssignStatement:
+		return o.hasUserFunctionCalls(n.Value)
+	default:
+		return false
+	}
 }
